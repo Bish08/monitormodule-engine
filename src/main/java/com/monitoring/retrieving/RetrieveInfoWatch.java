@@ -468,7 +468,11 @@ public class RetrieveInfoWatch {
 				bodyRequest.put("tasps_id", dfArray.get(i).getTasps_id());
 				if (dfArray.get(i).getTrigger_type() == 0) {
 					bodyRequest.put("status", CustomConstants.STATUS_SCHEDULED);
-				} else {
+				} 
+				//New code change 20171005 for avoiding  to change the status frequentaly for hourly dataflow
+				else if(dfArray.get(i).getFrequency()!= CustomConstants.FREQUENCY_HOURLY && dfArray.get(i).getTrigger_type() != 0 ) {
+				
+					log.info("this avoiding the frequentaly change in the status in the infostatus : dataflwo_id :"+dfArray.get(i).getDataflow_id()+"  Frequency:"+dfArray.get(i).getFrequency());
 					bodyRequest.put("status", CustomConstants.STATUS_WAITING);
 				}
 				MonitoringUtilities.setLogInfo(LoadProperties.getProperty(CustomConstants.STOP_MONITORING), dfArray.get(i).getDataflow_id(), dfArray.get(i).getTasps_id());

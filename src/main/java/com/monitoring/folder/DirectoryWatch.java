@@ -111,21 +111,23 @@ public class DirectoryWatch {
 				String nextDayDataFlowLoadDate = simpleDateFormat.format(dataFlowLoadDate.getTime());
 				log.info("Checking for next date file in the directory, dataflow+1   :" +nextDayDataFlowLoadDate );
 				
-				if(checkFilesAlreadyExistForNextDay(nextDayDataFlowLoadDate,dir)) {
+				if(!checkFilesExistForLoadDate(dataflow_load_date,dir) && checkFilesAlreadyExistForNextDay(nextDayDataFlowLoadDate,dir)) {
 					log.info("inside the checkFilesAlreadyExist method for checking for next date finles in the dir");
 					if(dataflow.getStatus() !=CustomConstants.STATUS_COMPLETE) 
 					updateHourlyDataFlowStatusAsComplete(dataflow);
 					break;
 					
-				} else {
-					continueSearch = this.checkFilesAlreadyExist(dataflow_load_date, dir);
 				}
-			}
-			
+				
+				/*else {
+					continueSearch = this.checkFilesAlreadyExist(dataflow_load_date, dir);
+				}*/
+			} 
+//			else {			
 			// CHECK IF FILES ARE ALREADY PRESENT IN FOLDER ON FIRST RUN.
 			continueSearch = this.checkFilesAlreadyExist(dataflow_load_date, dir);
 			log.trace("Result after check if file already exist. Continue to search? " + continueSearch);
-
+//			}
 			try {
 				Thread.sleep(Integer.parseInt(LoadProperties.getProperty("THREAD_POLLING_WAIT")));
 			} catch (InterruptedException e) {
@@ -157,6 +159,43 @@ public class DirectoryWatch {
 		return false;
 	}
 
+	
+	/*
+	 * new change in code  Checking for next date file in the dir for the hourly dataflow
+	 */
+	
+	private boolean checkFilesExistForLoadDate(String dataflow_load_date, Path dir) {
+
+		log.info("Inside the checkFilesAlreadyExistForNextDay method for checking the next day file for hourly dataflow ");
+		String dirName = dir.toString();
+		boolean bName=false;
+		File folderDirectory = new File(dirName);
+		File[] dir_contents = folderDirectory.listFiles();
+		boolean continueSearch = true;
+		log.trace(dir_contents.length);
+		for (int j = 0; j < dir_contents.length; j++) {
+			log.trace(dir_contents[j].getAbsoluteFile());
+			for (int i = 0; i < regexRules.size(); i++) {
+				String currentRegex = regexRules.get(i);
+				// logic date year month day
+				
+				if (currentRegex.contains("YY") && currentRegex.contains("MM") && currentRegex.contains("DD")) {
+					currentRegex = MonitoringUtilities.replaceRegexDate(dataflow_load_date, currentRegex);
+					log.trace("Current Regex: " + currentRegex);
+				}
+				Pattern uName = Pattern.compile(currentRegex);
+				Matcher mUname = uName.matcher(dir_contents[j].getName().toString());
+				bName = mUname.matches();
+				log.info("returning the  nextFileDay  status for hourly dataflow: "+ bName);
+				if (bName)
+					return true;
+			}
+		}
+		return  bName;
+	}
+	
+	
+	
 	
 	/*
 	 * new change in code  Checking for next date file in the dir for the hourly dataflow
